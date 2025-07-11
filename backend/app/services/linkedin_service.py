@@ -25,7 +25,7 @@ class LinkedInService:
         
         mock_profile = LinkedInProfile(
             profile_url=profile_url,
-            skills=self._extract_mock_skills_from_url(profile_url),
+            skills=self._extract_mock_skills_from_url(str(profile_url)),
             experience=[
                 {
                     "title": "Software Engineer",
@@ -40,7 +40,11 @@ class LinkedInService:
                     "degree": "Computer Science",
                     "year": "2020"
                 }
-            ]
+            ],
+            current_position=self._extract_current_position(str(profile_url)),
+            current_company=self._extract_current_company(str(profile_url)),
+            upcoming_position=self._extract_upcoming_position(str(profile_url)),
+            upcoming_company=self._extract_upcoming_company(str(profile_url))
         )
         
         return mock_profile
@@ -83,3 +87,38 @@ class LinkedInService:
         # - Endorsements
         
         return ["Python", "JavaScript", "React", "FastAPI", "Machine Learning"]
+    
+    def _extract_current_position(self, profile_url: str) -> Optional[str]:
+        """Extract current position from profile URL (mock implementation)"""
+        # In production, this would parse the actual LinkedIn profile data
+        # For now, return mock positions based on URL patterns
+        mock_positions = [
+            "Software Engineer", "Senior Developer", "Full Stack Developer",
+            "Data Scientist", "DevOps Engineer", "Product Manager",
+            "Frontend Developer", "Backend Developer", "Machine Learning Engineer"
+        ]
+        import random
+        return random.choice(mock_positions)
+    
+    def _extract_current_company(self, profile_url: str) -> Optional[str]:
+        """Extract current company from profile URL (mock implementation)"""
+        mock_companies = [
+            "Google", "Microsoft", "Amazon", "Apple", "Meta",
+            "Netflix", "Uber", "Airbnb", "Spotify", "Shopify",
+            "Stripe", "GitHub", "Slack", "Zoom", "Dropbox"
+        ]
+        import random
+        return random.choice(mock_companies)
+    
+    def _extract_upcoming_position(self, profile_url: str) -> Optional[str]:
+        """Extract upcoming position from profile URL (mock implementation)"""
+        # Mock implementation - in production, this would check for job search indicators
+        # or recent activity suggesting a job change
+        if "senior" in profile_url.lower() or "lead" in profile_url.lower():
+            return "Senior Software Engineer"
+        return None
+    
+    def _extract_upcoming_company(self, profile_url: str) -> Optional[str]:
+        """Extract upcoming company from profile URL (mock implementation)"""
+        # Mock implementation - would be based on job search activity
+        return None

@@ -31,6 +31,10 @@ class LinkedInProfile(BaseModel):
     skills: List[str] = []
     experience: List[Dict[str, Any]] = []
     education: List[Dict[str, Any]] = []
+    current_position: Optional[str] = None
+    current_company: Optional[str] = None
+    upcoming_position: Optional[str] = None
+    upcoming_company: Optional[str] = None
 
 class UserProfile(BaseModel):
     """Combined user profile"""
@@ -58,6 +62,8 @@ class LearningRecommendation(BaseModel):
     skills_gained: List[str]
     resources: List[Dict[str, str]]
     reasoning: str
+    job_relevance: Optional[str] = None
+    company: Optional[str] = None
 
 class RecommendationRequest(BaseModel):
     """Request model for generating recommendations"""

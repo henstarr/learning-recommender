@@ -1,4 +1,4 @@
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Optional
 from datetime import datetime
 from ..models.schemas import (
     UserProfile, RecommendationResponse, LearningRecommendation,
@@ -46,8 +46,8 @@ class RecommendationService:
         # Identify skill gaps
         skill_gaps = self._identify_skill_gaps(current_skills, user_profile)
         
-        # Generate recommendations based on skill gaps
-        recommendations = self._generate_learning_recommendations(skill_gaps, current_skills)
+        # Generate recommendations based on skill gaps and job context
+        recommendations = self._generate_learning_recommendations(skill_gaps, current_skills, user_profile)
         
         return RecommendationResponse(
             user_profile=user_profile,
@@ -150,7 +150,8 @@ class RecommendationService:
     def _generate_learning_recommendations(
         self, 
         skill_gaps: List[SkillGap], 
-        current_skills: Set[str]
+        current_skills: Set[str],
+        user_profile: UserProfile
     ) -> List[LearningRecommendation]:
         """Generate learning recommendations based on skill gaps"""
         
@@ -212,6 +213,10 @@ class RecommendationService:
         for gap in skill_gaps:
             skill_key = gap.skill.replace(" ", "").lower()
             
+            # Get job context for recommendations
+            job_relevance = self._get_job_relevance(gap.skill, user_profile)
+            company = self._get_target_company(user_profile)
+            
             if skill_key in recommendation_templates:
                 template = recommendation_templates[skill_key]
                 recommendation = LearningRecommendation(
@@ -222,7 +227,9 @@ class RecommendationService:
                     estimated_time=template["estimated_time"],
                     skills_gained=template["skills_gained"],
                     resources=template["resources"],
-                    reasoning=gap.reasoning
+                    reasoning=gap.reasoning,
+                    job_relevance=job_relevance,
+                    company=company
                 )
                 recommendations.append(recommendation)
             else:
@@ -237,11 +244,58 @@ class RecommendationService:
                     resources=[
                         {"type": "search", "url": f"https://www.google.com/search?q={gap.skill}+tutorial"}
                     ],
-                    reasoning=gap.reasoning
+                    reasoning=gap.reasoning,
+                    job_relevance=job_relevance,
+                    company=company
                 )
                 recommendations.append(recommendation)
         
         return recommendations[:5]  # Return top 5 recommendations
+    
+    def _get_job_relevance(self, skill: str, user_profile: UserProfile) -> Optional[str]:
+        """Determine job relevance for a skill based on user profile"""
+        if not user_profile.linkedin_profile:
+            return None
+        
+        linkedin = user_profile.linkedin_profile
+        
+        # Check if user has upcoming position
+        if linkedin.upcoming_position:
+            return f"Essential for {linkedin.upcoming_position} role"
+        
+        # Check current position
+        if linkedin.current_position:
+            return f"Advance your {linkedin.current_position} career"
+        
+        # Default based on skill
+        skill_job_mapping = {
+            "react": "Frontend Development",
+            "fastapi": "Backend Development",
+            "docker": "DevOps Engineering",
+            "postgresql": "Database Engineering",
+            "machine learning": "Data Science",
+            "kubernetes": "Cloud Engineering"
+        }
+        
+        job_area = skill_job_mapping.get(skill.lower(), "Software Development")
+        return f"Key skill for {job_area}"
+    
+    def _get_target_company(self, user_profile: UserProfile) -> Optional[str]:
+        """Get target company for recommendations"""
+        if not user_profile.linkedin_profile:
+            return None
+        
+        linkedin = user_profile.linkedin_profile
+        
+        # Prioritize upcoming company
+        if linkedin.upcoming_company:
+            return linkedin.upcoming_company
+        
+        # Fall back to current company
+        if linkedin.current_company:
+            return linkedin.current_company
+        
+        return None
     
     async def get_example_recommendations(self) -> RecommendationResponse:
         """Get example recommendations for demo purposes"""
